@@ -1,0 +1,244 @@
+#guidelines and solved problem
+#for Ros software commands to run 
+
+-------------------------------------------------------
+#Firstly, please place this complete repository or 
+#just the ROS folder into your src folder of catkin_ws 
+#and run catkin_make command. 
+#Once the catkin_make is done successfully, 
+#then to launch the robot in an empty simulation world for testing 
+#in Gazebo Simulator, run the following command on your terminal
+
+-------------------------------------------------------------
+roslaunch rur_detailed_description gazebo.launch
+------------------------------------------------------------
+#Once you have successfully launched the simulation
+#, you can also run the Teleop node to teleoprate 
+#your robot using keyboard. To run the node,
+#paste the following command in a new terminal and
+#you can move your robot around using
+' i ' ,' j ' , ' k ' , ' l ' , ' , '
+#i = move forward
+#k = stop
+#j = rotate left
+#l = rotate right
+#, = move backward
+#along with few more operations like 'u','o','m','.'
+#to go forward-left, forward-right, 
+#backward-left and backward-right respectively
+
+-----------------------------------------------------
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+---------------------------------------------------------
+
+#You can also add a couple of obstacles
+#in the environment and check if the LiDAR 
+#is able to detect them. Just run the following 
+#command and it will open up RViz which is a robot 
+#visualization tool that helps you visualize sensor 
+#data from the robot.
+
+--------------------------------------------------------
+roslaunch rur_detailed_description display.launch
+------------------------------------------------------
+
+#Once you have tested
+#that both Gazebo and RViz 
+#are working properly, then comes the part where 
+#you can actually simulate the robot in a virtual world
+#and do mapping and navigation. 
+#Just like we run 'rur_bringup.launch' file while 
+#working on real robot similarly to 
+#start the simulation, 
+#we need to launch the 'rur_house.launch' file 
+#that will launch gazebo with RUR in 
+#a house environment. 
+#You can also run 'display.launch' file 
+#to view the LiDAR data at the same time. 
+#This eleminates the step of manually opening RViz
+#for mapping and setting up different parameters
+
+---------------------------------------------------
+roslaunch rur_gazebo rur_house.launch
+-----------------------------------------------
+----------------------------------------
+roslaunch rur_detailed_description display.launch
+---------------------------------------
+
+
+
+
+
+
+#The command of mapping 
+#is the same as the original robot. 
+#Just you don't need to open up RViz separetly 
+#as you already have 'display.launch' running.
+#Also you can run the teleop node in a separate terminal 
+#and move the robot around
+
+---------------------------------------------
+rosrun gmapping slam_gmapping scan:=scan
+---------------------------------------------------
+
+#Once you have completed generating the map, 
+#before saving the map, navigate to the directory 
+#where you want to save the map through your 
+#terminal and run the following command to save it.
+#You can then navigate to the directory 
+#rom your file manager to check if 
+#the map is properly saved
+
+---------------------------------------------------
+rosrun map_server map_saver -f name_of_map
+--------------------------------------------------
+
+
+#To run naviagtion, ---------------------------
+
+roslaunch rur_gazebo rur_house.launch
+-------------------------------------------------------
+
+#Once you have the simulation running properly 
+#with the robot spawned in the middle, 
+#now you can run the same navi
+#firstly you have to make sure that the simulation 
+#is running properly. 
+#Run the following command to start the simulation
+
+--------------------------------------------------------
+<roslaunch rur_gazebo rur_house.launch>
+-------------------------------------------------------
+
+#Once you have the simulation running properly 
+#with the robot spawned in the middle, 
+#now you can run the same navigation file which 
+#is used to start navigation on the real robot that is -
+
+----------------------------------------------------
+<roslaunch rur_navigation rur_navigation.launch>
+------------------------------------------------------
+
+#But here, you dont need to give any location of the map 
+#as the default location of the map 
+#is set to the house map. If you want to pass some 
+#other map, then you can pass the respective argument. 
+#There is no need to launch 'display.launch' as this 
+#will start RViz automatically 
+#and you can give 2D Nav Goal to the robot
+#Once you give the navigation goal, 
+#the robot will start navigating to the goal 
+#location autonomously in Gazebo and you can 
+#visualize that in RViz at the same time. 
+#Once you reach the Goal, you will also get a prompt on 
+#the terminal that the robot has Reached the Goal...
+
+-------------------------------------------------------------
+
+
+#setting up rplidar:
+
+ls -l /dev | grep ttyUSB
+
+sudo chmod 666 /dev/ttyUSB0
+
+usb-devices
+
+#For Rplidar A1 to run on Rviz:
+<roslaunch rplidar_ros view_rplidar.launch>
+
+#to save a map using hector slam geotiff:
+-------------------------------------------
+1) roslaunch rplidar_ros rplidar.launch
+2) roslaunch hector_slam_launch tutorial.launch
+3) rostopic pub syscommand std_msgs/String "savegeotiff"
+4) Go to ~/MAAR_ws/src/hector_slam/hector_geotiff/maps
+
+------------------------OR---------------------------
+
+#to save a map using hector slam map-server:
+-------------------------------------------
+1) roslaunch rplidar_ros rplidar.launch
+2) roslaunch hector_slam_launch tutorial.launch
+3) cd ~/MAAR_ws/maps
+4) rosrun map_server map_saver -f my_map
+
+#to load a saved map:
+----------------------
+1) cd ~/MAAR_ws/maps
+2) roscore
+3) rosrun map_server map_server my_map.yaml
+4) rviz
+
+Convert the Map into png Format:
+---------------------------------
+>>convert my_map.pgm my_map.png
+
+Edit the Map:
+-------------
+1) sudo apt-get update
+2) sudo apt-get install gimp
+3) gimp
+go to File -> Open, and then locate your Map image.
+
+#ERROR in system pkgs:
+-----------------------
+1) sudo apt-get -f install
+2) sudo apt-get update
+3) sudo apt-get -f install
+4) sudo dpkg --configure -a
+5) sudo apt-get clean
+
+#ERROR in pkgs because of multiple system architecture
+in our case the jetson nano b01 have ARM processor so it's architecture 
+is arm64, but We found amd64 also:
+------------------------------------------------------------------------
+
+1) dpkg --print-foreign-architectures
+2) dpkg --get-selections | awk '/amd64/{print $1}'
+3) apt-get remove --purge `dpkg --get-selections | awk '/amd64/{print $1}'`
+4) dpkg --remove-architecture amd64
+5) sudo apt-get update
+6) sudo dpkg --remove-architecture armhf
+
+___________________________________________________________________________
+to control the motor using keyboard:
+------------------------------------------
+>>roslaunch launch_jetson_nano_bot maar_keyboard_control.launch
+
+which contains:
+(1- roscore 2- rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200 3- rosrun teleop_twist_keyboard teleop_twist_keyboard.py)
+
+___________________________________________________________________________
+1) run rplidar with Rviz:
+---------------------------
+>>roslaunch rplidar_ros rplidar.launch
+__________________________________________________________________________
+2) launch gmapping with hector_slam:
+--------------------------------------
+>>launch hector_slam_launch tutorial.launch
+__________________________________________________________________________
+3) save the map:
+----------------
+>>rosrun map_server map_saver -f my_map
+
+___________________________________________________________________________
+localization of MAAR through Rviz:
+-------------------------------------
+>>roslaunch launch_jetson_nano_bot maar_localization.launch
+
+__________________________________________________________________________
+sending encoder data over ROS:
+---------------------------------
+1) rosrun localization_data_pub ekf_odom_pub
+2) rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0 _baud:=115200
+3) rosrun localization_data_pub rviz_click_to_2d
+4) rviz
+5) rosrun teleop_twist_keyboard teleop_twist_keyboard.py 
+6) rostopic echo /odom_data_quat
+
+[OR]run it with launch file:
+-------------------------------
+>> roslaunch launch_jetson_nano_bot maar_full.launch
+>> rostopic echo /odom_data_quat
+
